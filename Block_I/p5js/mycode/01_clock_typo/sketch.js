@@ -1,11 +1,14 @@
 // globals
 let customFont;
 let seconds, milliseconds, millisecondsPerSecond;
+let currentX = 0;
+let currentString = "0";
+let currentSecondRepresented = 0;
 
 // preload
 function preload() {
   // load data here
-  customFont = loadFont('data/IBM_Plex_Mono/IBMPlexMono-Regular.ttf');
+  customFont = loadFont('data/Amatic-SC/AmaticSC-Bold.ttf');
 }
 
 // setup
@@ -22,6 +25,8 @@ function setup() {
 // draw
 function draw() {
 
+
+
   // background
   background(0);
 
@@ -30,15 +35,46 @@ function draw() {
   seconds = int(milliseconds / 1000) % 60000;
   millisecondsPerSecond = milliseconds % 1000;
 
-  // seconds as two digits and milliseconds as three digitis if used for typo
-  let seconds_two_digits = String(seconds).padStart(2, "0");
-  let milliseconds_three_digits = String(millisecondsPerSecond).padStart(3, "0");
+  if(currentSecondRepresented >= 59){
+    currentSecondRepresented = 0;
+    currentString = "58, 59, 60";
+  }
+
+
+  //every sec, add new sec string onto string.
+  if (seconds > currentSecondRepresented) {
+    currentSecondRepresented = seconds;
+    currentString = currentString + ", " + seconds;
+  }
+
+
+  //cursor
+  if (millisecondsPerSecond >= 500) {
+
+    stroke(255);
+    fill(255);
+    line(width/ 2 + 70, height / 2 - 100, width/ 2 + 70, height / 2 + 100);
+  }
 
   // show seconds and milliseconds
   noStroke();
   fill(255);
-  textAlign(CENTER, CENTER);
-  textSize(24);
-  text(seconds_two_digits + ":" + milliseconds_three_digits, width / 2, height / 2);
+  textAlign(RIGHT, CENTER);
+  textSize(200);
+  text(currentString, width / 2 + 50, height / 2 - 25);
+
+  //process preceeding numberess
+  let preceedingString = ", ";
+  for (let i = 1; i <= 4; i++) {
+    if(currentSecondRepresented >= 59) {
+      preceedingString = ", 60, 1 , 2"
+    }
+    preceedingString = preceedingString + (currentSecondRepresented + i) + ", ";
+  }
+
+  fill(50);
+  textAlign(LEFT, CENTER);
+  text(preceedingString, width / 2 + 75, height / 2 - 25);
+
 
 }
