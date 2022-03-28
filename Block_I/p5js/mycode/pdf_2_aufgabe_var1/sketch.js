@@ -20,7 +20,8 @@ function draw() {
   let seconds_two_digits = String(seconds).padStart(2, "0");
   let milliseconds_three_digits = String(millisecondsPerSecond).padStart(3, "0");
 
-  fill(242,242,242);
+  if(millis() >= 60000) fill(128, 255, 128);
+  else fill(242,242,242);
   rect(110,35,200,50,10);
   fill(0);
   textSize(40);
