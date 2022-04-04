@@ -1,4 +1,7 @@
 "use strict";
+
+let intervalDie = window.setInterval(spawnDeath, 555);
+let intervalBorn = window.setInterval(spawnLife, 232);
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 //changeable properties
 const lineAmountPer = 30;
@@ -13,6 +16,13 @@ const lineOffset = 80;
 //all lines aray
 let lines = [];
 
+//all dp array
+let dps = [];
+
+//counters
+let deathCounter = 0;
+let bornCounter = 0;
+
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 //define helper functions
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
@@ -24,7 +34,22 @@ function getRandomInt(min, max) {
 }
 
 let customFont;
-let dp;
+
+
+//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+//define listener functions
+
+function spawnDeath(){
+  console.log("spawned red death");
+  dps.push(new dataPoint("red"));
+  deathCounter++;
+}
+
+function spawnLife(){
+  console.log("spawned blue alive");
+  dps.push(new dataPoint("blue"));
+  bornCounter++;
+}
 
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 //preload suff
@@ -45,17 +70,14 @@ function setup() {
 
   //red
   for (let i = 0; i < lineAmountPer; i++) {
-    lines.push(new line(random(redX - lineOffset, redX + lineOffset), redColors[getRandomInt(0, redColors.length)]));
+    lines.push(new ctrlLine(random(redX - lineOffset, redX + lineOffset), redColors[getRandomInt(0, redColors.length)]));
   }
 
   //blue
   for (let i = 0; i < lineAmountPer; i++) {
-    lines.push(new line(random(blueX - lineOffset, blueX + lineOffset), blueColors[getRandomInt(0, blueColors.length)]));
+    lines.push(new ctrlLine(random(blueX - lineOffset, blueX + lineOffset), blueColors[getRandomInt(0, blueColors.length)]));
   }
 
-
-  
-  dp = new dataPoint("red");
 }
 
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
@@ -64,9 +86,7 @@ function draw() {
   // get seconds and milliseconds
   let milliseconds = int(millis() % 60000);
   let seconds = int(milliseconds / 1000) % 60000;
-  let millisecondsPerSecond = milliseconds % 1000;
   let seconds_two_digits = String(seconds).padStart(2, "0");
-  let milliseconds_three_digits = String(millisecondsPerSecond).padStart(3, "0");
 
   background(255);
 
@@ -94,9 +114,34 @@ function draw() {
   rect(width / 2, 310, 15, 15);
 
   //data points
+  dps.forEach(dp => {
+    push();
+    translate(dp.XLocation,dp.YLocation);
+    scale(0.5);
+    fill(dp.mainCol);
+    circle(0,0,80,80);
+    stroke(dp.secCol);
+    dp.whichIcon().drawItem();    
+    pop();
+    dp.update();
 
-  rect(dp.XLocation, dp.YLocation, 50, 50);
-  dp.update();
+  });
+
+  //Counters
+  fill(color("#4E0000"));
+  circle(50,height, 415,415);
+  fill(color("#30697E"));  
+  circle(width - 50, 0, 415, 415);  
+  fill(color("#97B0AA"));
+  circle(50,height, 400,400);
+  circle(width - 50, 0, 400, 400);
+  noStroke();
+  fill(color("#F64747"));
+  textAlign(CENTER, CENTER);
+  textSize(140);
+  text(deathCounter, 100, height - 100);
+  fill(color("#1ED8D2"));
+  text(bornCounter, width - 100, 70);
 
 }
 
@@ -108,14 +153,20 @@ class dataPoint {
 
     switch (this.kind) {
       case "red":
-        this.speed = 1;
-        this.XLocation = this.rndX(redX); 
+        this.speed = 100;
+        this.XLocation = null;
+        this.XLocation = this.rndX(redX);
         this.YLocation = -20;
+        this.mainCol = color("#F64747");
+        this.secCol = color("#4E0000")
         break;
       case "blue":
-        this.speed = -1;
+        this.speed = -100;
+        this.XLocation = null;
         this.XLocation = this.rndX(blueX);
         this.YLocation = 820;
+        this.mainCol = color("#1ED8D2");
+        this.secCol = color("#30697E")
         break;
       default:
         console.error("wtf kinda data point you trying to create B");
@@ -124,10 +175,28 @@ class dataPoint {
   }
 
   update() {
-    this.YLocation += this.speed;
+    this.setLocs();
+    //Speed per Second!
+    this.YLocation += this.speed * deltaTime / 1000;
   }
 
-  hasLeft(){
+  setLocs() {
+    if(this.XLocation === null) {
+      switch (this.kind) {
+        case "red":
+          this.XLocation = this.rndX(redX);
+          break;
+        case "blue":
+          this.XLocation = this.rndX(blueX);
+          break;
+        default:
+          console.error("I forgor");
+          break;
+      }
+    }
+  }
+
+  hasLeft() {
     let flag;
     switch (this.kind) {
       case "red":
@@ -143,14 +212,12 @@ class dataPoint {
     return flag;
   }
 
-  whichIcon(){
-    switch (kind) {
+  whichIcon() {
+    switch (this.kind) {
       case "red":
-
-        break;
+        return new Skull();
       case "blue":
-
-        break;
+        return new Baby();
       default:
         console.error("wtf ya not getting an icon for that kinda shit");
         break;
@@ -158,14 +225,93 @@ class dataPoint {
   }
 
   rndX(center) {
-    return random(center - 20, center + 20);
+    return random(center - 100, center + 100);
+  }
+}
+
+class Skull {
+  drawItem() {
+    strokeWeight(5);
+    strokeCap(SQUARE);
+    //SkullSHape
+    beginShape();
+    vertex(-25, -15);
+    vertex(-15, -25);
+    vertex(15, -25);
+    vertex(25, -15);
+    vertex(25, 5);
+    vertex(15, 15);
+    vertex(15, 25);
+    vertex(-15, 25);
+    vertex(-15, 15);
+    vertex(-25, 5);
+    endShape(CLOSE);
+    //skullLines
+    strokeWeight(5);
+    line(-7, 5, -7, 20);
+    line(0, 5, 0, 20);
+    line(7, 5, 7, 20);
+    //Skulleyes
+    strokeWeight(4);
+    beginShape();
+    vertex(-15,-12);
+    vertex(-5,-9);
+    vertex(-5,-3);
+    vertex(-15,-3);
+    endShape(CLOSE);
+      beginShape();
+    vertex(15,-12);
+    vertex(5,-9);
+    vertex(5,-3);
+    vertex(15,-3);
+    endShape(CLOSE); 
+  }
+}
+
+class Baby {
+  drawItem() {
+    //babby
+    //Head
+    strokeWeight(5);
+    beginShape();
+    vertex(-25, -15);
+    vertex(-15, -25);
+    vertex(15, -25);
+    vertex(25, -15);
+    vertex(25, -5);
+    vertex(30, 0);
+    vertex(30, 2);
+    vertex(30, 5);
+    vertex(25, 10);
+    vertex(25, 15);
+    vertex(15, 25);
+    vertex(-15, 25);
+    vertex(-25, 15);
+    vertex(-25, 10);
+    vertex(-30, 5);
+    vertex(-30, 2);
+    vertex(-30, 0);
+    vertex(-25, -5);
+    endShape(CLOSE);
+    //lips
+    beginShape();
+    curveVertex(-15, 10);
+    curveVertex(-15, 10);
+    curveVertex(0, 15);
+    curveVertex(15, 10);
+    curveVertex(15, 10);
+    endShape();
+    //eyes
+    strokeWeight(7);
+    point(-10, -5);
+    point(10, -5);
   }
 }
 
 
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 //Line mit verschiedenen Punkten
-class line {
+class ctrlLine {
   constructor(pos, colour) {
     this.ctrlPoints = [];
     this.colour = colour;
