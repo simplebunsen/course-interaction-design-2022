@@ -157,16 +157,16 @@ class dataPoint {
         this.XLocation = null;
         this.XLocation = this.rndX(redX);
         this.YLocation = -20;
-        this.mainCol = color("#F64747");
-        this.secCol = color("#4E0000")
+        this.mainCol = color("#A3CFCD");
+        this.secCol = color("#000000")
         break;
       case "blue":
         this.speed = -100;
         this.XLocation = null;
         this.XLocation = this.rndX(blueX);
         this.YLocation = 820;
-        this.mainCol = color("#1ED8D2");
-        this.secCol = color("#30697E")
+        this.mainCol = color("#845EC2");
+        this.secCol =  color("#FFC75F");
         break;
       default:
         console.error("wtf kinda data point you trying to create B");
