@@ -2,12 +2,13 @@
 
 let intervalDie = window.setInterval(spawnDeath, 555);
 let intervalBorn = window.setInterval(spawnLife, 232);
+let intervalWeight = window.setInterval(handleWeights, 2000);
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 //changeable properties
 const lineAmountPer = 30;
 
-const redX = 200;
-const blueX = 600;
+const redX = 250;
+const blueX = 550;
 
 const lineOffset = 80;
 
@@ -40,17 +41,29 @@ let customFont;
 //define listener functions
 
 function spawnDeath(){
-  console.log("spawned red death");
+  //console.log("spawned red death");
   dps.push(new dataPoint("red"));
   deathCounter++;
 }
 
 function spawnLife(){
-  console.log("spawned blue alive");
+  //console.log("spawned blue alive");
   dps.push(new dataPoint("blue"));
   bornCounter++;
 }
 
+function handleWeights(){
+  for (let i = 0; i < lineAmountPer; i++) {
+    lines[i].decreaseWeight();
+  }
+  for (let i = lineAmountPer; i < lineAmountPer*2; i++) {
+    lines[i].increaseWeight();
+  }
+
+  dps.forEach(e => {
+    e.lerpThisColor();
+  });
+}
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 //preload suff
 
@@ -102,46 +115,48 @@ function draw() {
   }
 
   //gen second text
-  noStroke();
-  fill(color("#97B0AA"));
-  textAlign(CENTER, CENTER);
-  textSize(200);
-  text("0", width / 2, 180);
-  text(seconds_two_digits.split("")[0], width / 2, 380);
-  text(seconds_two_digits.split("")[1], width / 2, 580);
+  // noStroke();
+  // fill(color("#97B0AA"));
+  // textAlign(CENTER, CENTER);
+  // textSize(200);
+  // text("0", width / 2, 180);
+  // text(seconds_two_digits.split("")[0], width / 2, 380);
+  // text(seconds_two_digits.split("")[1], width / 2, 580);
 
-  rectMode(CENTER);
-  rect(width / 2, 310, 15, 15);
+  // rectMode(CENTER);
+  // rect(width / 2, 310, 15, 15);
 
   //data points
+  
   dps.forEach(dp => {
     push();
+    strokeWeight(4);
     translate(dp.XLocation,dp.YLocation);
     scale(0.5);
     fill(dp.mainCol);
-    circle(0,0,80,80);
     stroke(dp.secCol);
-    dp.whichIcon().drawItem();    
+    circle(0,0,80,80);
+    //dp.whichIcon().drawItem();    
     pop();
     dp.update();
 
   });
 
-  //Counters
-  fill(color("#4E0000"));
-  circle(50,height, 415,415);
-  fill(color("#30697E"));  
-  circle(width - 50, 0, 415, 415);  
-  fill(color("#97B0AA"));
-  circle(50,height, 400,400);
-  circle(width - 50, 0, 400, 400);
-  noStroke();
-  fill(color("#F64747"));
-  textAlign(CENTER, CENTER);
-  textSize(140);
-  text(deathCounter, 100, height - 100);
-  fill(color("#1ED8D2"));
-  text(bornCounter, width - 100, 70);
+  // //Counters
+  // fill(color("#4E0000"));
+  // circle(50,height, 415,415);
+  // fill(color("#30697E"));  
+  // circle(width - 50, 0, 415, 415);  
+  // fill(color("#97B0AA"));
+  // circle(50,height, 400,400);
+  // circle(width - 50, 0, 400, 400);
+  // noStroke();
+  // fill(color("#F64747"));
+  // textAlign(CENTER, CENTER);
+  // textSize(140);
+  // text(deathCounter, 100, height - 100);
+  // fill(color("#1ED8D2"));
+  // text(bornCounter, width - 100, 70);
 
 }
 
@@ -158,20 +173,28 @@ class dataPoint {
         this.XLocation = this.rndX(redX);
         this.YLocation = -20;
         this.mainCol = color("#F64747");
-        this.secCol = color("#4E0000")
+        this.secCol = color("#4E0000");
+        this.targetCol = color("#ffb3b3");
         break;
       case "blue":
         this.speed = -100;
         this.XLocation = null;
         this.XLocation = this.rndX(blueX);
         this.YLocation = 820;
-        this.mainCol = color("#1ED8D2");
-        this.secCol = color("#30697E")
+        this.mainCol = color("#6ef0ec");
+        this.secCol = color("#30697E");
+        this.targetCol = color("#00ccc5");
         break;
       default:
         console.error("wtf kinda data point you trying to create B");
         break;
     }
+
+  }
+
+  
+  lerpThisColor(){
+    this.mainCol = lerpColor(this.mainCol, this.targetCol, .25);
   }
 
   update() {
@@ -323,6 +346,14 @@ class ctrlLine {
 
   get getCtrlPoints() {
     return this.ctrlPoints;
+  }
+
+  increaseWeight(){
+    this.weight += .2;
+  }
+  
+  decreaseWeight(){
+    this.weight - .05 >= 0.1? this.weight -= .05 : true;
   }
 }
 
