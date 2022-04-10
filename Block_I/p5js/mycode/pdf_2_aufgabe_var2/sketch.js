@@ -2,7 +2,7 @@ let w = 800
 let h = 800;
 let seconds, milliseconds;
 
-let pimmel = 0;
+let lecounter = 0;
 
 function setup() {
   createCanvas(w, h);
@@ -42,8 +42,8 @@ function draw() {
 
 function keyPressed(){
   fill(keyCode);
-  let x = 75 + (pimmel % 14) * 50;
-  let y = 150 + (int) (pimmel / 14) * 50;
+  let x = 75 + (lecounter % 14) * 50;
+  let y = 150 + (int) (lecounter / 14) * 50;
   rect(x ,y, 40, 40, 10);
   if(keyCode > 150) fill(0);
   else fill(255);
@@ -51,5 +51,5 @@ function keyPressed(){
   else textSize(30);
   textAlign(CENTER, CENTER);
   text(key, x, y);
-  pimmel += 1;
+  lecounter += 1;
 }
