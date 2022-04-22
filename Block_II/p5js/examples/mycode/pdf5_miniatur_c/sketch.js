@@ -99,7 +99,7 @@ function draw() {
     textAlign(CENTER);
     
     textSize(width/10);
-    text("Turn me", width/2, height/2 + height/ 8);
+    text("turn me", width/2, height/2 + height/ 8);
   
     var degree = int(degrees(calcAngle));
   
