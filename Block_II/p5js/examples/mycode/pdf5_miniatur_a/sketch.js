@@ -15,23 +15,45 @@ let confettiTimes = 0;
 
 const resetTime = 250;
 
+let customFont;
+
+let cnv;
+
+function preload() {
+  // load data here
+  customFont = loadFont('font/Lobster-Regular.ttf');
+}
+
+
 function setup() {
-  createCanvas(window.innerWidth, window.innerHeight);
+  if(window.innerHeight > window.innerWidth) createCanvas(window.innerWidth, window.innerWidth);
+  else createCanvas(window.innerHeight, window.innerHeight);
   rectMode(CENTER);
   leftLimit = 120;
   rightLimit = width - 120;
   upperLimit = 100;
   lowerLimit = height - 200;
+  if(lowerLimit <= upperLimit){
+    lowerLimit += upperLimit - lowerLimit + 21;
+  }
   x = width / 2;
   y = height / 2;
+  
+  textFont(customFont);
+  textAlign(CENTER, CENTER);
+  
 }
 
 function windowResized() {
-  resizeCanvas(window.innerWidth, window.innerHeight);
+  if(window.innerHeight > window.innerWidth) resizeCanvas(window.innerWidth, window.innerWidth);
+  else resizeCanvas(window.innerHeight, window.innerHeight);
   leftLimit = 120;
   rightLimit = width - 120;
   upperLimit = 100;
   lowerLimit = height - 200;
+  if(lowerLimit <= upperLimit){
+    lowerLimit += upperLimit - lowerLimit + 15;
+  }
   x = width / 2;
   y = height / 2;
 }
@@ -43,7 +65,7 @@ function draw() {
 
   if (returning) {
     let frac = (millis() - startlerp) / resetTime;
-    if (frac < 1) y = lerp(lowerLimit - 100, upperLimit + 100, frac);
+    if (frac < 1) y = lerp(lowerLimit - 20, upperLimit, frac);
     else returning = false;
   }
   else {
@@ -55,7 +77,7 @@ function draw() {
       y = lerp(y, constrain(mouseY, upperLimit, lowerLimit), 0.1);
     }
 
-    if (y >= lowerLimit - 100) {
+    if (y >= lowerLimit - 20) {
       returning = true;
       dragging = false;
       setTimeout(function obama() {
@@ -78,10 +100,16 @@ function draw() {
   fill(0, 0, 0, 0);
   rect(x, y, 200, 50);
 
+  
+  fill(0);
+
   for (let flake of flakes) {
     flake.update(t); // update snowflake position
     flake.display(); // draw snowflake
   }
+  noStroke();
+  textSize(width/8);
+  text("drag me", width/2, height/2 + height/8);
 } //end draw
 
 /*when mouse is pressed, 

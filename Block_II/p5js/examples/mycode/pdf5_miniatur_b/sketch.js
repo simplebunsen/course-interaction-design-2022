@@ -19,9 +19,17 @@ let period = 100.0; // How many pixels before the wave repeats
 let dx; // Value for incrementing x
 let yvalues; // Using an array to store height values for the wave
 
+let customFont;
+
+function preload() {
+  // load data here
+  customFont = loadFont('font/Lobster-Regular.ttf');
+}
+
 
 function setup() {
-  cnv = createCanvas(window.innerWidth, window.innerHeight);
+  if(window.innerHeight > window.innerWidth) cnv = createCanvas(window.innerWidth, window.innerWidth);
+  else cnv = createCanvas(window.innerHeight, window.innerHeight);
   cnv.mousePressed(playOscillator);
   cnv.touchStarted(playOscillator);
   osc = new p5.Oscillator('triangle');
@@ -37,10 +45,15 @@ function setup() {
   w = width + 16;
   dx = (TWO_PI / period) * xspacing;
   yvalues = new Array(floor(w / xspacing));
+
+
+  textFont(customFont);
+  textAlign(CENTER, CENTER);
 }
 
 function windowResized() {
-  resizeCanvas(window.innerWidth, window.innerHeight);
+  if(window.innerHeight > window.innerWidth) resizeCanvas(window.innerWidth, window.innerWidth);
+  else resizeCanvas(window.innerHeight, window.innerHeight);
   x = width / 2;
   y = height / 2;
   leftLimit = width/12;
@@ -85,12 +98,17 @@ function draw() {
     calcWave();
     renderWave();
   }
+
+  noStroke();
+  textSize(width/8);
+  text("press me", width/2, height/2 + height/4);
 }
 
 function playOscillator() {
   // starting an oscillator on a user gesture will enable audio
   // in browsers that have a strict autoplay policy.
   // See also: userStartAudio();
+  userStartAudio();
   osc.start();
   playing = true;
 }
@@ -111,7 +129,7 @@ function touchEnded() {
 function calcWave() {
   // Increment theta (try different values for
   // 'angular velocity' here)
-  theta += 0.02;
+  theta += 0.2;
 
   // For every x value, calculate a y value with sine function
   let x_w = theta;

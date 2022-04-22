@@ -1,151 +1,149 @@
-let x = 200;
-let y = 200;
-let diameter = 200;
-let dragging = false;
+let distance = 0;
 
-let returning = false;
+let customFont;
 
-let leftLimit;
-let rightLimit;
-let upperLimit;
-let lowerLimit;
-let startlerp = 0;
+let cnv;
 
-let confettiTimes = 0;
 
-const resetTime = 250;
+var dragging = false; // Is the slider being dragged?
+var rollover = false; // Is the mouse over the slider?
 
-function setup() {
-  createCanvas(window.innerWidth, window.innerHeight);
-  rectMode(CENTER);
-  leftLimit = 120;
-  rightLimit = width - 120;
-  upperLimit = 100;
-  lowerLimit = height - 200;
-  x = width / 2;
-  y = height / 2;
+// Circle variables for knob
+var x;
+var y;
+var r;;
+
+// Knob angle
+var angle = 0.001;
+
+var count = 0;
+
+// Offset angle for turning knob
+var offsetAngle = 0;
+
+
+let progress;
+
+function preload() {
+  // load data here
+  customFont = loadFont('font/Lobster-Regular.ttf');
 }
 
-function windowResized() {
-  resizeCanvas(window.innerWidth, window.innerHeight);
-  leftLimit = 120;
-  rightLimit = width - 120;
-  upperLimit = 100;
-  lowerLimit = height - 200;
-  x = width / 2;
-  y = height / 2;
+
+function setup() {
+  
+  if(window.innerHeight > window.innerWidth) cnv = createCanvas(window.innerWidth, window.innerWidth);
+  else cnv = createCanvas(window.innerHeight, window.innerHeight);
+
+  textFont(customFont);
+  textAlign(CENTER, CENTER);
+  x = width/2;
+  y = height/2  +height/3;
+  r = width/10;
+}
+
+function windowResized() {  
+  if(window.innerHeight > window.innerWidth) resizeCanvas(window.innerWidth, window.innerWidth);
+  else resizeCanvas(window.innerHeight, window.innerHeight); 
+  
+  x = width/2;
+  y = height/2 +height/3;  
+  r = width/10;
 }
 
 function draw() {
-
-  let t = frameCount / 60; // update time
   background(255);
 
-  if (returning) {
-    let frac = (millis() - startlerp) / resetTime;
-    if (frac < 1) y = lerp(lowerLimit - 100, upperLimit + 100, frac);
-    else returning = false;
-  }
-  else {
-
-    //if dragging is true
-    //set x, y to mouseX, mouseY
+  if (count === 0) {
+		
+    // Is it being dragged?
     if (dragging) {
-      x = lerp(x, constrain(mouseX, leftLimit, rightLimit), 0.1);
-      y = lerp(y, constrain(mouseY, upperLimit, lowerLimit), 0.1);
+      var dx = mouseX - x;
+      var dy = mouseY - y;
+      var mouseAngle = atan2(dy, dx);
+      angle = mouseAngle - offsetAngle;
+    }
+  
+    // Fill according to state
+    if (dragging) {
+      fill (175);
+    } 
+    else {
+      fill(255);
+    }
+    // Draw ellipse for knob
+    stroke(0);
+    push();
+    translate(x, y);
+    rotate(angle);
+    strokeWeight(4);
+    ellipse(0, 0, r*2, r*2);
+    strokeWeight(10);
+    line(0, 0, r, 0);
+    pop();
+    fill(0);
+  
+  
+    // Map is an amazing function that will map one range to another!
+    // Here we take the slider's range and map it to a value between 0 and 255
+    // Our angle is either between
+    var calcAngle = 0; 
+    if (angle < 0) {
+      calcAngle = map(angle, -PI, 0, PI, 0);
+    } 
+    else if (angle > 0) {
+      calcAngle = map(angle, 0, PI, TWO_PI, PI);
+    }
+    
+    noStroke();
+    textAlign(CENTER);
+    
+    textSize(width/10);
+    text("Turn me", width/2, height/2 + height/ 8);
+  
+    var degree = int(degrees(calcAngle));
+  
+    if (dragging && degree < 10) {
+      count == 2;
+    }
+    }
+    if (count === 2) {
+      var b = map(calcAngle, 0, TWO_PI, 0, 255);
+      fill(b);
+      rect(320, 90, 160, 180);
+    }
+    stroke(0);
+    strokeWeight(10);
+    for (let i = 0; i < 16; i++) {
+        let myX = map(i, 0, 15, 0 + width/24, width - width/24);
+        line(myX, height / 2, myX, 0 + height / 24);
     }
 
-    if (y >= lowerLimit - 100) {
-      returning = true;
-      dragging = false;
-      setTimeout(function obama() {
-        dropConfetti();
-        if (confettiTimes < 10) {
-          setTimeout(obama, 200)
-          confettiTimes++;
-        } else {
-          confettiTimes = 0;
-        }
-      }, 1)
-      startlerp = millis();
-    }
+    progress = map(calcAngle, 0, 2 * PI, 0, width);
+    noStroke();
+    fill(255);
+    rect(width - progress, 0, width, height/ 2 + height/24);
+} 
 
-  }
+function mouseWheel(event){
+  distance += event.delta / 10;
+  distance = constrain(distance, 0, width)
+  print(distance);
+}
 
-  stroke(0);
-  strokeWeight(5);
-  dragging ? line(mouseX, 0, x, y - 25) : line(x, 0, x, y - 25);
-  fill(0, 0, 0, 0);
-  rect(x, y, 200, 50);
 
-  for (let flake of flakes) {
-    flake.update(t); // update snowflake position
-    flake.display(); // draw snowflake
-  }
-} //end draw
-
-/*when mouse is pressed, 
-check if mouse is intersecting w/ circle */
 function mousePressed() {
-  //check if mouse is over the ellipse
-  if (dist(x, y, mouseX, mouseY) < diameter / 2) {
+  // Did I click on slider?
+  if (dist(mouseX, mouseY, x, y) < r) {
     dragging = true;
+    // If so, keep track of relative location of click to corner of rectangle
+    var dx = mouseX - x;
+    var dy = mouseY - y;
+    offsetAngle = atan2(dy, dx) - angle;
   }
 }
 
 function mouseReleased() {
+  // Stop dragging
   dragging = false;
-}
-
-// <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
-let flakes = []; // array to hold snowflake objects
-
-function dropConfetti() {
-
-  // create a random number of snowflakes each frame
-  for (let i = 0; i < random(25); i++) {
-    flakes.push(new Flake()); // append snowflake object
-  }
-
-  // loop through snowflakes with a for..of loop
-
-}
-
-// snowflake class
-class Flake {
-
-  constructor() {
-    // initialize coordinates
-    this.posX = 0;
-    this.posY = random(-50, 0);
-    this.initialangle = random(0, 2 * PI);
-    this.size = random(4, 20);
-
-    // radius of snowflake spiral
-    // chosen so the snowflakes are uniformly spread out in area
-    this.radius = sqrt(random(pow(width / 2, 2)));
-    this.color = color(random(255));
-  }
-
-  update(time) {
-    // x position follows a circle
-    let w = 0.6; // angular speed
-    let angle = w * time + this.initialangle;
-    this.posX = width / 2 + this.radius * sin(angle);
-
-    // different size snowflakes fall at slightly different y speeds
-    this.posY += pow(this.size, 0.5);
-
-    // delete snowflake if past end of screen
-    if (this.posY > height) {
-      let index = flakes.indexOf(this);
-      flakes.splice(index, 1);
-    }
-  };
-
-  display() {
-    fill(this.color);
-    noStroke();
-    ellipse(this.posX, this.posY, this.size);
-  };
 }
