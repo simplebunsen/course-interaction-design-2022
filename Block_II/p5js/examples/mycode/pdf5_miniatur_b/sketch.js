@@ -1,151 +1,131 @@
 let x = 200;
 let y = 200;
-let diameter = 200;
-let dragging = false;
 
-let returning = false;
-
-let leftLimit;
-let rightLimit;
 let upperLimit;
 let lowerLimit;
-let startlerp = 0;
+let leftLimit;
+let rightLimit;
 
-let confettiTimes = 0;
+let osc, playing, freq, amp, cnv;
 
-const resetTime = 250;
+
+
+//le wave
+let xspacing = 16; // Distance between each horizontal location
+let w; // Width of entire wave
+let theta = 0.0; // Start angle at 0
+let amplitude = 0; // Height of wave
+let period = 100.0; // How many pixels before the wave repeats
+let dx; // Value for incrementing x
+let yvalues; // Using an array to store height values for the wave
+
 
 function setup() {
-  createCanvas(window.innerWidth, window.innerHeight);
+  cnv = createCanvas(window.innerWidth, window.innerHeight);
+  cnv.mousePressed(playOscillator);
+  cnv.touchStarted(playOscillator);
+  osc = new p5.Oscillator('triangle');
   rectMode(CENTER);
-  leftLimit = 120;
-  rightLimit = width - 120;
-  upperLimit = 100;
-  lowerLimit = height - 200;
   x = width / 2;
   y = height / 2;
+  leftLimit = width/12;
+  rightLimit = width - width/12;
+  upperLimit = height/12;
+  lowerLimit = height - height/12;
+
+
+  w = width + 16;
+  dx = (TWO_PI / period) * xspacing;
+  yvalues = new Array(floor(w / xspacing));
 }
 
 function windowResized() {
   resizeCanvas(window.innerWidth, window.innerHeight);
-  leftLimit = 120;
-  rightLimit = width - 120;
-  upperLimit = 100;
-  lowerLimit = height - 200;
   x = width / 2;
   y = height / 2;
+  leftLimit = width/12;
+  rightLimit = width - width/12;
+  upperLimit = height/12;
+  lowerLimit = height - height/12;
+
+
+  w = width + 16;
+  dx = (TWO_PI / period) * xspacing;
+  yvalues = new Array(floor(w / xspacing));
 }
 
 function draw() {
-
-  let t = frameCount / 60; // update time
+  dx = (TWO_PI / period) * xspacing;
   background(255);
-
-  if (returning) {
-    let frac = (millis() - startlerp) / resetTime;
-    if (frac < 1) y = lerp(lowerLimit - 100, upperLimit + 100, frac);
-    else returning = false;
-  }
-  else {
-
-    //if dragging is true
-    //set x, y to mouseX, mouseY
-    if (dragging) {
-      x = lerp(x, constrain(mouseX, leftLimit, rightLimit), 0.1);
-      y = lerp(y, constrain(mouseY, upperLimit, lowerLimit), 0.1);
-    }
-
-    if (y >= lowerLimit - 100) {
-      returning = true;
-      dragging = false;
-      setTimeout(function obama() {
-        dropConfetti();
-        if (confettiTimes < 10) {
-          setTimeout(obama, 200)
-          confettiTimes++;
-        } else {
-          confettiTimes = 0;
-        }
-      }, 1)
-      startlerp = millis();
-    }
-
-  }
-
   stroke(0);
-  strokeWeight(5);
-  dragging ? line(mouseX, 0, x, y - 25) : line(x, 0, x, y - 25);
-  fill(0, 0, 0, 0);
-  rect(x, y, 200, 50);
+  triangle()
+  line(leftLimit - width/24, upperLimit , leftLimit - width/24, lowerLimit + height / 24);
+  line(leftLimit - width/24, lowerLimit + height/24, rightLimit + width/24, lowerLimit + height / 24);
 
-  for (let flake of flakes) {
-    flake.update(t); // update snowflake position
-    flake.display(); // draw snowflake
-  }
-} //end draw
 
-/*when mouse is pressed, 
-check if mouse is intersecting w/ circle */
-function mousePressed() {
-  //check if mouse is over the ellipse
-  if (dist(x, y, mouseX, mouseY) < diameter / 2) {
-    dragging = true;
+
+  x = lerp(x, constrain(mouseX, leftLimit, rightLimit), 0.1);
+  y = lerp(y, constrain(mouseY, upperLimit, lowerLimit), 0.1);
+
+  freq = constrain(map(x, leftLimit, rightLimit, 100, 500), 100, 500);
+  amp = constrain(map(y, lowerLimit, upperLimit, 0, 1), 0, 1);
+  fill(0);
+  if(playing){
+    fill("gray");
   }
+  rect(x,y, 20, 20);
+
+  if (playing) {
+    // smooth the transitions by 0.1 seconds
+    osc.freq(freq, 0.1);
+    osc.amp(amp, 0.1);
+    amplitude = constrain(map(amp, 0, 1, 0, 75), 0, 75);
+    period = 600 - freq;
+    
+    calcWave();
+    renderWave();
+  }
+}
+
+function playOscillator() {
+  // starting an oscillator on a user gesture will enable audio
+  // in browsers that have a strict autoplay policy.
+  // See also: userStartAudio();
+  osc.start();
+  playing = true;
 }
 
 function mouseReleased() {
-  dragging = false;
+  // ramp amplitude to 0 over 0.5 seconds
+  osc.amp(0, 0.5);
+  playing = false;
 }
 
-// <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
-let flakes = []; // array to hold snowflake objects
-
-function dropConfetti() {
-
-  // create a random number of snowflakes each frame
-  for (let i = 0; i < random(25); i++) {
-    flakes.push(new Flake()); // append snowflake object
-  }
-
-  // loop through snowflakes with a for..of loop
-
+function touchEnded() {
+    // ramp amplitude to 0 over 0.5 seconds
+    osc.amp(0, 0.5);
+    playing = false;
 }
 
-// snowflake class
-class Flake {
 
-  constructor() {
-    // initialize coordinates
-    this.posX = 0;
-    this.posY = random(-50, 0);
-    this.initialangle = random(0, 2 * PI);
-    this.size = random(4, 20);
+function calcWave() {
+  // Increment theta (try different values for
+  // 'angular velocity' here)
+  theta += 0.02;
 
-    // radius of snowflake spiral
-    // chosen so the snowflakes are uniformly spread out in area
-    this.radius = sqrt(random(pow(width / 2, 2)));
-    this.color = color(random(255));
+  // For every x value, calculate a y value with sine function
+  let x_w = theta;
+  for (let i = 0; i < yvalues.length; i++) {
+    yvalues[i] = sin(x_w) * amplitude;
+    x_w += dx;
   }
+}
 
-  update(time) {
-    // x position follows a circle
-    let w = 0.6; // angular speed
-    let angle = w * time + this.initialangle;
-    this.posX = width / 2 + this.radius * sin(angle);
-
-    // different size snowflakes fall at slightly different y speeds
-    this.posY += pow(this.size, 0.5);
-
-    // delete snowflake if past end of screen
-    if (this.posY > height) {
-      let index = flakes.indexOf(this);
-      flakes.splice(index, 1);
-    }
-  };
-
-  display() {
-    fill(this.color);
-    noStroke();
-    ellipse(this.posX, this.posY, this.size);
-  };
+function renderWave() {
+  noStroke();
+  fill(0);
+  // A simple way to draw the wave with an ellipse at each location
+  for (let x_f = 0; x_f < yvalues.length; x_f++) {
+    ellipse(x_f * xspacing, height / 2 + yvalues[x_f], 16, 16);
+  }
 }
