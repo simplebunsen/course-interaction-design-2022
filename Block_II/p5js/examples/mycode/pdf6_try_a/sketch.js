@@ -17,6 +17,14 @@ let shakesProcessed = 0;
 
 let currentProcessedBeatDelay = 0;
 
+let beatIntervalObj;
+
+let mouseStartMs = 0;
+let mouseRestartDelay = 1000;
+
+let countdownIntervalObj;
+
+let countdownCurrent = 3;
 
 
 let osc;
@@ -30,7 +38,7 @@ const State = {
   Record: 'Record',
   Play: 'Play'
 };
-var currentState = State.Record;
+var currentState = State.Splash;
 
 function setup() {
   canvas = createCanvas(w, h);
@@ -43,19 +51,34 @@ function setup() {
 
 }
 
+
+
 function draw() {
   background(255);
 
   switch (currentState) {
     case State.Splash:
-
+      if (mouseStartMs == 0) mouseStartMs = millis();
+      text("Press your Screen Once To record a beat", 20, height / 2);
+      if (mouseIsPressed && mouseStartMs + mouseRestartDelay < millis()) {
+        countdownIntervalObj = setInterval(() => {
+          countdownCurrent--;
+        }, 1000);
+        currentState = State.Countdown;
+        mouseStartMs = 0;
+      }
       break;
     case State.Countdown:
-
+      text("Countdown to record start: " + countdownCurrent, 20, height / 2);
+      if (countdownCurrent == 0) {
+        currentState = State.Record;
+        clearInterval(countdownIntervalObj);
+        countdownCurrent = 3;
+      }
       break;
     case State.Record:
-      text("recording, shake or click in beat", 20, height/2);
-      if (checkForShake()) {
+      text("recording, shake or click in beat", 20, height / 2);
+      if (checkForShake() || mouseIsPressed) {
         processShake();
       }
 
@@ -74,7 +97,7 @@ function draw() {
         currentState = State.Play;
 
         fill("red");
-        setInterval(() => {
+        beatIntervalObj = setInterval(() => {
           console.log("printing rect");
           rect(width / 2, height / 2, 50, 50);
           playOscillator();
@@ -83,7 +106,17 @@ function draw() {
       }
       break;
     case State.Play:
-      text("playing back ur beat boi", 20, height/2);
+      if (mouseStartMs == 0) mouseStartMs = millis();
+
+      text("playing back ur beat boi, press to reset", 20, height / 2);
+      if (mouseIsPressed && mouseStartMs + mouseRestartDelay < millis()) {
+        currentState = State.Splash;
+        interShakeDurations = [];
+        shakesProcessed = 0;
+        pShakeMs = 0;
+        clearInterval(beatIntervalObj);
+        mouseStartMs = 0;
+      }
       break;
     default:
       break;
@@ -117,20 +150,17 @@ function processShake() {
     pShakeMs = millis();
     playOscillator();
     setTimeout(rampDownOscillator, 50);
+    shakesProcessed += 1;
   } else if (millis() > pShakeMs + shakeSafetyDelay) {
     console.log("getting inside array push " + (millis() - pShakeMs));
     interShakeDurations.push(millis() - pShakeMs);
     pShakeMs = millis();
     playOscillator();
     setTimeout(rampDownOscillator, 50);
+    shakesProcessed += 1;
   } else console.log("inside neither");
-
-  shakesProcessed += 1;
 }
 
-function mousePressed() {
-  processShake();
-}
 
 function playOscillator() {
   // starting an oscillator on a user gesture will enable audio
