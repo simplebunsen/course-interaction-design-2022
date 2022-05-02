@@ -51,7 +51,7 @@ function draw() {
     directionalLight(255, 255, 255, 0, 0, 1);
 
     stroke(255);
-    strokeWeight(100);
+    strokeWeight(100*map(vol, 0, 1, 1, 2));
     line(-width, height / 3, width, height / 3);
 
     push();
@@ -94,7 +94,9 @@ function startMic() {
 
 function touchStarted() {
   startMic();
+  userStartAudio();
 }
 function mousePressed() {
   startMic();
+  userStartAudio();
 }

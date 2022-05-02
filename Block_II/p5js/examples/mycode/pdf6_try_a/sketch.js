@@ -57,6 +57,17 @@ function setup() {
   osc.freq(freq);
   osc.amp(amp);
 
+  textAlign(CENTER, CENTER);
+  ellipseMode(CENTER);
+
+}
+
+function preload(){
+  //pre icons by flaticon.com
+  cursorimg = loadImage("cursor.png");
+  shakeimg = loadImage("shake.png");
+  playimg = loadImage("play-button.png");
+  clockimg = loadImage("clock.png")
 }
 
 
@@ -64,10 +75,12 @@ function setup() {
 function draw() {
   background(255);
 
+  imageMode(CENTER);
   switch (currentState) {
     case State.Splash:
       if (mouseStartMs == 0) mouseStartMs = millis();
-      text("Press your Screen Once To record a beat", 20, height / 2);
+      image(cursorimg, width/2, height/2, 100, 100);
+      text("Press your Screen Once To record a beat", width/2, height / 2 + 100);
       if (mouseIsPressed && mouseStartMs + mouseRestartDelay < millis()) {
         countdownIntervalObj = setInterval(() => {
           countdownCurrent--;
@@ -76,8 +89,9 @@ function draw() {
         mouseStartMs = 0;
       }
       break;
-    case State.Countdown:
-      text("Countdown to record start: " + countdownCurrent, 20, height / 2);
+    case State.Countdown:      
+      image(clockimg, width/2, height/2, 100, 100);
+      text("Countdown to record start: " + countdownCurrent, width/2, height / 2 + 100);
       if (countdownCurrent == 0) {
         currentState = State.Record;
         clearInterval(countdownIntervalObj);
@@ -85,7 +99,8 @@ function draw() {
       }
       break;
     case State.Record:
-      text("recording, shake or click in beat", 20, height / 2);
+      image(shakeimg, width/2, height/2, 100, 100);
+      text("recording, shake or click in beat", width/2, height / 2 + 100);
       if (checkForShake() || mouseIsPressed) {
         processShake();
       }
@@ -120,12 +135,13 @@ function draw() {
       if(beatIndicatorMs != 0){
         let colores = lerpColor(color("red"), color("white"), map(millis(), beatIndicatorMs, beatIndicatorMs + beatIndicatorTO, 0, 1));
         fill(colores);
-        rect(width / 2, height / 2, 50, 50);
+        ellipse(width/2, height/2, 100);
       }
       fill("black");
 
-      text("playing back ur beat, press to reset", 20, height / 2);
-      text("BPM: " + curBPM, width/2, height/2 + 100);
+      image(playimg, width/2, height/2, 100, 100);
+      text("playing back ur beat, press to reset", width/2, height / 2 + 100);
+      text("BPM: " + curBPM, width/2, height/2 + 80);
       if (mouseIsPressed && mouseStartMs + mouseRestartDelay < millis()) {
         currentState = State.Splash;
         interShakeDurations = [];
