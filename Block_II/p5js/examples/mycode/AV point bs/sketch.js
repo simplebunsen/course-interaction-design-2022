@@ -5,7 +5,7 @@ let radius = 20;
 let canvas;
 
 function setup() {
-  canvas = createCanvas(800, 800);
+  canvas = createCanvas(720, 720);
   noCursor();
 }
 
@@ -34,10 +34,11 @@ function keyPressed() {
     radius = (radius - 75) % 1000;
     console.log(radius);
   } else if (keyCode === LEFT_ARROW) {
-    resizeCanvas(1600, 900);
+    console.log("jesus");
+    resizeCanvas(1280, 720);
     console.log("resized to widescreen");
   } else if (keyCode === RIGHT_ARROW) {
-    resizeCanvas(800, 800);
+    resizeCanvas(720, 720);
     console.log("resized to square");
   }
 
