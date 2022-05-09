@@ -2,12 +2,13 @@ let canvas;
 
 let showWarning = false;
 
-setTimeout(function() {showWarning = true;}, 60000);
+setTimeout(function () {
+  showWarning = true;
+}, 60000);
 
 
 let sketch = function (p) {
-  var scalingW;
-  var scalingH;
+  var scaling;
   var curHandSizes = [0, 0];
   var processedHandSizes = [40, 40];
 
@@ -23,21 +24,14 @@ let sketch = function (p) {
   var drumsImg;
   var tromboneImg;
 
-  var depthImg;
+  var noteWhole, noteHalf, noteQuarter, noteTriole, noteEight;
 
-  var leftLine = {};
-  var rightLine = {};
+  var depthImg;
 
 
 
   p.preload = function () {
     console.log("preloading");
-
-    // Sound recording by Mirko Horstmann via freesound.org
-    // https://freesound.org/people/m1rk0/sounds/50070/
-  }
-
-  p.setup = function () {
     snare = p.loadSound('metronome_clack.wav');
     trombone = p.loadSound('trombone.wav');
 
@@ -45,46 +39,29 @@ let sketch = function (p) {
     drumsImg = p.loadImage("drums.png");
     tromboneImg = p.loadImage("trombone.png");
     depthImg = p.loadImage("depth.png");
+
+
+    noteWhole = p.loadImage("whole.png");
+    noteHalf = p.loadImage("half.png");
+    noteQuarter = p.loadImage("quarter.png");
+    noteTriole = p.loadImage("triole.png");
+    noteEight = p.loadImage("eight.png");
+    // Sound recording by Mirko Horstmann via freesound.org
+    // https://freesound.org/people/m1rk0/sounds/50070/
+  }
+
+  p.setup = function () {
     canvas = p.createCanvas(innerWidth, innerHeight);
-    scalingW = p.width / 1000;
-    scalingH = p.height/ 1000;
+    scaling = p.width / 1000;
     canvas.id("canvas");
 
     p.colorMode(p.HSB);
     p.imageMode(p.CENTER);
-
-    leftLine = {
-      x1: 200 * scalingW,
-      y1: p.height - 120 * scalingH,
-      x2: 400 * scalingW,
-      y2: 500 * scalingH,
-    }
-    rightLine = {
-      x1: p.width - 200 * scalingW,
-      y1: p.height - 120 * scalingH,
-      x2: p.width - 400 * scalingW,
-      y2: 500 * scalingH,
-    }
   }
 
   p.windowResized = function () {
     p.resizeCanvas(innerWidth, innerHeight);
-    scalingW = p.width / 1000;
-
-    leftLine = {
-      x1: 200 * scalingW,
-      y1: p.height - 120 * scalingH,
-      x2: 400 * scalingW,
-      y2: 500 * scalingH,
-    }
-    rightLine = {
-      x1: p.width - 200 * scalingW,
-      y1: p.height - 120 * scalingH,
-      x2: p.width - 400 * scalingW,
-      y2: 500 * scalingH,
-    }
-
-
+    scaling = p.width / 1000;
   }
 
 
@@ -98,18 +75,11 @@ let sketch = function (p) {
     p.background(255);
     p.textSize(40);
     p.noStroke();
-    if(showWarning) p.text("p5 sound becomes laggy after time, \n please reload site in case of bugs", 20, 50);
-
-    p.strokeWeight(20*scalingW);
-    p.stroke(89);
-    p.line(leftLine.x1, leftLine.y1, leftLine.x2, leftLine.y2);
-    
-    p.line(rightLine.x1, rightLine.y1, rightLine.x2, rightLine.y2);
+    if (showWarning) p.text("p5 sound becomes laggy after time, \n please reload site in case of bugs", 20, 50);
 
 
 
-    p.drawDepthIndicator();    
-    p.drawSlidingInstruments();
+    p.drawDepthIndicator();
     let timeNow = p.millis();
 
     if (detections != undefined) {
@@ -130,7 +100,8 @@ let sketch = function (p) {
          p.drawLandmarks([17, 21], 300); //pinky */
 
         p.calcHandSizes();
-        //p.drawHandIcons();
+        p.drawHandIcons();
+        p.drawCorrespondingNote();
 
         for (let i = 0; i < detections.multiHandLandmarks.length; i++) {
           if (detections.multiHandedness[i].label == "Right") tromboneCurHand = i;
@@ -164,31 +135,35 @@ let sketch = function (p) {
 
   }
 
-  p.drawSlidingInstruments = function () {
-    let tromboneFactor, snareFactor;
-    tromboneFactor = p.map(processedHandSizes[tromboneCurHand], 40, 200, 1, 0);
-    snareFactor = p.map(processedHandSizes[snareCurHand], 40, 200, 1, 0);
-    
-    
-    let v1l = p.createVector(leftLine.x1, leftLine.y1);
-    let v2l = p.createVector(leftLine.x2, leftLine.y2)
-    p.push();
-    p.translate(v1l.lerp(v2l, tromboneFactor));
-    p.image(tromboneImg, 0, 0, processedHandSizes[tromboneCurHand] * 1 * scalingW, processedHandSizes[tromboneCurHand] * 1 * scalingW);
-    p.pop();
+  p.drawCorrespondingNote = function () {
+    for (let i = 0; i < processedHandSizes.length; i++) {
+      let desiredImg = null;
+      let e = processedHandSizes[i];
+      if (e < 80) {
+        desiredImg = noteWhole;
+      } else if (e < 120) {
+        desiredImg = noteHalf;
+      } else if (e < 140) {
+        desiredImg = noteQuarter;
+      } else if (e < 180) {
+        desiredImg = noteTriole;
+      } else if (e < 200) {
+        desiredImg = noteEight;
+      }
 
-    let v1r = p.createVector(rightLine.x1, rightLine.y1);
-    let v2r = p.createVector(rightLine.x2, rightLine.y2)
-    p.push();
-    p.translate(v1r.lerp(v2r, snareFactor));
-    p.image(drumsImg, 0, 0, processedHandSizes[snareCurHand] * 1 * scalingW, processedHandSizes[snareCurHand] * 1 * scalingW);
-    p.pop();
-    
+      if(i == tromboneCurHand){
+        p.image(desiredImg, scaling * 200, p.height - 200, scaling *200, scaling *200);
+      } else{
+        
+        p.image(desiredImg, p.width - scaling * 200, p.height - 200, scaling *200, scaling *200);
+      }
+    }
   }
+
 
   p.drawDepthIndicator = function () {
     if (depthImg != undefined) {
-      p.image(depthImg, p.width / 2, p.height / 4, scalingW * 150, scalingW * 150);
+      p.image(depthImg, p.width / 2, p.height / 2, scaling * 200, scaling * 200);
     }
   }
 
@@ -237,14 +212,14 @@ let sketch = function (p) {
       p.rotate(angle);
       if (detections.multiHandedness[i].label == "Right") p.scale(-1, 1);
       p.fill(255);
-      p.image(handImg, 0, 0, processedHandSizes[i] * 4 * scalingW, processedHandSizes[i] * 4 * scalingW);
-      if(i == snareCurHand) {
-        p.translate(scalingW * 20, scalingW *40);
-        p.image(drumsImg, 0, 0, processedHandSizes[i] * 1 * scalingW, processedHandSizes[i] * 1 * scalingW)
+      p.image(handImg, 0, 0, processedHandSizes[i] * 4 * scaling, processedHandSizes[i] * 4 * scaling);
+      if (i == snareCurHand) {
+        p.translate(scaling * 20, scaling * 40);
+        p.image(drumsImg, 0, 0, processedHandSizes[i] * 1 * scaling, processedHandSizes[i] * 1 * scaling)
       }
-      if(i == tromboneCurHand) {
-        p.translate(scalingW * 20, scalingW *40);
-        p.image(tromboneImg, 0, 0, processedHandSizes[i] * 1 * scalingW, processedHandSizes[i] * 1 * scalingW)
+      if (i == tromboneCurHand) {
+        p.translate(scaling * 20, scaling * 40);
+        p.image(tromboneImg, 0, 0, processedHandSizes[i] * 1 * scaling, processedHandSizes[i] * 1 * scaling)
       }
       p.pop();
 
