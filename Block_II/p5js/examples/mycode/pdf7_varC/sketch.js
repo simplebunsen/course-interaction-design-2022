@@ -150,8 +150,10 @@ let sketch = function (p) {
       } else if (e < 200) {
         desiredImg = noteEight;
       }
-
-      if(i == tromboneCurHand){
+      if(desiredImg == null){
+        console.log("img null, wtf");
+      }
+      else if(i == tromboneCurHand){
         p.image(desiredImg, scaling * 200, p.height - 200, scaling *200, scaling *200);
       } else{
         
