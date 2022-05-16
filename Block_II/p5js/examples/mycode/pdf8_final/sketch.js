@@ -2,9 +2,9 @@ let canvas;
 
 let showWarning = false;
 
-setTimeout(function () { showWarning = true; }, 60000);
+setTimeout(function () { showWarning = true; }, 120000);
 
-setTimeout(function () { location.reload(); }, 63000);
+setTimeout(function () { location.reload(); }, 123000);
 
 
 let sketch = function (p) {
